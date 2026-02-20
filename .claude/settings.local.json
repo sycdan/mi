@@ -1,9 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(scaf call:*)",
       "Bash(pip show:*)",
-      "Bash(wsl -l:*)"
+      "Bash(scaf call:*)",
+      "Bash(wsl:*)"
     ]
   }
 }

@@ -25,6 +25,8 @@ Every command lives in its own directory with three files:
 | `command.py` | Dataclass defining inputs and `Result` dataclass for output |
 | `handler.py` | `handle(command) -> command.Result` — the logic |
 
+Read-only queries (CQRS) use `query.py` instead of `command.py` to signal they have no side effects and are cacheable. Everything else is the same.
+
 Scaf parses fields of the command dataclass into CLI args via argparse. Required fields (no default) become positional args; optional fields become `--flag` args. Use `doc=` on `field()` for help text (Python 3.14+).
 
 Call `values_must_fit(self)` in `__post_init__` when using scaf fitters (see `scaf.rules`).
