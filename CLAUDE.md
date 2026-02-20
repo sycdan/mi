@@ -4,6 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **Keep this file up to date.** Whenever you add a new command, discover a new gotcha, or learn something non-obvious about this codebase, update CLAUDE.md so future sessions benefit from it.
 
+## Setup
+
+After cloning this repo, activate the pre-push hook:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ## Running commands
 
 ```bash
@@ -21,11 +29,11 @@ This is a [scaf](http://scaf.sycdan.com) deck — a Python CLI framework where e
 
 Every command lives in its own directory with three files:
 
-| File | Purpose |
-|---|---|
-| `__init__.py` | Empty (marks it as a Python package) |
-| `command.py` | Dataclass defining inputs and `Result` dataclass for output |
-| `handler.py` | `handle(command) -> command.Result` — the logic |
+| File          | Purpose                                                     |
+| ------------- | ----------------------------------------------------------- |
+| `__init__.py` | Empty (marks it as a Python package)                        |
+| `command.py`  | Dataclass defining inputs and `Result` dataclass for output |
+| `handler.py`  | `handle(command) -> command.Result` — the logic             |
 
 Read-only queries (CQRS) use `query.py` instead of `command.py` to signal they have no side effects and are cacheable. Everything else is the same.
 
