@@ -125,6 +125,19 @@ def _pick(items: list[str]) -> str | None:
 def handle(command: Pick) -> Pick.Result:
   logger.debug(f"Handling {command=}")
   repos = _sorted_repos()
+
+  if command.query:
+    q = command.query.lower()
+    matches = [d for d in repos if q in d.name.lower()]
+    if len(matches) == 1:
+      logger.info(f"Query {command.query!r} matched {matches[0].name!r}")
+      return Pick.Result(path=matches[0].as_posix())
+    if len(matches) > 1:
+      names = [d.name for d in matches]
+      raise ValueError(f"Ambiguous: {len(matches)} repos match {command.query!r}: {names}")
+    logger.debug(f"No repos match {command.query!r}")
+    return Pick.Result()
+
   chosen = _pick([d.name for d in repos])
   if not chosen:
     logger.debug("No repo chosen")

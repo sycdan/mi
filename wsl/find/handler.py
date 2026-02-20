@@ -7,15 +7,18 @@ from wsl.list.command import List
 
 logger = logging.getLogger(__name__)
 
+_PATH = "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-def _distro_has_origin(distro: str, origin: str) -> bool:
-  # WSL drops extra positional args, so embed origin directly via shlex.quote
-  quoted = shlex.quote(origin)
+
+def _distro_has_origin(distro: str, win_path: str) -> bool:
+  # Pass the Windows path and use wslpath inside WSL to avoid MINGW path mangling
+  quoted = shlex.quote(win_path)
   script = (
+    f"{_PATH}; "
+    f"wsl_path=$(wslpath {quoted} 2>/dev/null) || exit 0; "
     "shopt -s nullglob; "
     "for d in ~/projects/*/; do "
-    f'url=$(git -C "$d" remote get-url origin 2>/dev/null); '
-    f"[ \"$url\" = {quoted} ] && echo found && break; "
+    'git -C "$d" remote -v 2>/dev/null | grep -qF "$wsl_path" && echo found && break; '
     "done"
   )
   try:

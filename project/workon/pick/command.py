@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 class Pick:
   """Interactively select a git repo from ~/Projects."""
 
+  query: str = field(default="", doc="If given, auto-select the single matching repo instead of showing the picker")
+
   @dataclass
   class Result:
     path: str = field(

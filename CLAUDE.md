@@ -52,18 +52,24 @@ All handlers use `logger = logging.getLogger(__name__)`. Scaf exposes log output
 ### Current commands
 
 **`project/`**
-- `project/workon` — full dev environment flow: pick repo → find/create WSL distro → print distro name
-  - `project/workon/pick` — interactive TUI repo picker (msvcrt + ANSI, no deps); returns `Pick.Result(path=...)`
+- `project/workon [name] [--create]` — full dev environment flow: pick repo → find/create WSL distro → activate
+  - optional `name` arg: auto-selects if exactly one repo matches, fails if ambiguous
+  - `--create`: initialises `~/Projects/<name>` as a new git repo if no match found
+  - `project/workon/pick [--query QUERY]` — interactive TUI repo picker (msvcrt + ANSI, no deps); with `--query`, auto-selects single match or raises; returns `Pick.Result(path=...)`
 
 **`wsl/`** — WSL distro management; install dirs live under `C:/wsl/<name>/`, images under `C:/wsl-images/*.tar`
 - `wsl/list` — list installed distros; returns `List.Result(distros=[...])`
-- `wsl/find <origin>` — find a distro whose `~/projects/*/` has a repo with the given git origin; returns `Find.Result(distro=...)`
-- `wsl/create <name> [--image PATH]` — `wsl --import` using the newest `.tar` in `C:/wsl-images/` by default; returns `Create.Result(distro=...)`
+- `wsl/find <origin>` — find a distro whose `~/projects/*/` has any remote pointing to the given Windows path; returns `Find.Result(distro=...)`
+- `wsl/create <name> [--origin WIN_PATH] [--image PATH]` — `wsl --import` then clones the Windows repo into `~/projects/<name>`; raises if distro already exists
+- `wsl/activate <name> [--project PROJECT]` — launch interactive shell; if `--project` given, starts in `~/projects/<project>`
 - `wsl/nuke <name> [--force]` — unregister distro and remove its install dir; prompts for confirmation unless `--force`
 
 #### WSL notes
 - `wsl -l -q` outputs UTF-16 LE without BOM — decode with `utf-16-le`.
 - WSL drops extra positional args passed after `bash -c 'script'`, so embed dynamic values directly in the script using `shlex.quote()`.
+- MINGW (Git Bash) expands absolute POSIX paths (`/mnt/c/...`) to Windows paths at shell level. To avoid mangling, pass Windows paths (`C:/...`) through Python and convert inside WSL using `wslpath`.
+- Always export a full `PATH` in non-interactive bash scripts: `export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin` so that `git` and `wslpath` are found.
+- In `wsl/find`, the origin is a Windows path; the bash script calls `wslpath` to get the WSL form, then checks all remotes via `git remote -v | grep -qF`.
 
 ## Dotfiles
 
