@@ -2,7 +2,7 @@
 
 ## Setup
 
-On host machine, install [scaf](http://scaf.sycdan.com) in user pacakges (it has no deps, just needs Python 3.14).
+On host machine, install [scaf](http://scaf.sycdan.com) in user packages (it has no deps, just needs Python 3.14).
 
 ```bash
 pip install git+https://github.com/sycdan/scaf
