@@ -27,6 +27,8 @@ Every command lives in its own directory with three files:
 
 Scaf parses fields of the command dataclass into CLI args via argparse. Required fields (no default) become positional args; optional fields become `--flag` args. Use `doc=` on `field()` for help text (Python 3.14+).
 
+Call `values_must_fit(self)` in `__post_init__` when using scaf fitters (see `scaf.rules`).
+
 ### Self-executing commands
 
 A command dataclass can define an `execute()` method that defers the handler import to avoid circular imports:
@@ -39,14 +41,29 @@ def execute(self) -> "MyCommand.Result":
 
 This lets callers do `MyCommand().execute()` without importing the handler directly.
 
-### Current commands
+### Logging
 
-- `project/workon` — interactively pick a git repo from `~/Projects` and print its path
-  - `project/workon/pick` — the interactive picker sub-command; reusable via `Pick().execute()`; returns `Pick.Result(path=...)`
+All handlers use `logger = logging.getLogger(__name__)`. Scaf exposes log output via `-v` / `-vv` / `-vvv` flags on `scaf call`.
 
 ### Output
 
 `scaf call` JSON-serializes whatever `handle()` returns (via `scaf.output.print_result`). Handlers that want plain stdout output (not JSON) should `print()` directly and return `None`.
+
+### Current commands
+
+**`project/`**
+- `project/workon` — full dev environment flow: pick repo → find/create WSL distro → print distro name
+  - `project/workon/pick` — interactive TUI repo picker (msvcrt + ANSI, no deps); returns `Pick.Result(path=...)`
+
+**`wsl/`** — WSL distro management; install dirs live under `C:/wsl/<name>/`, images under `C:/wsl-images/*.tar`
+- `wsl/list` — list installed distros; returns `List.Result(distros=[...])`
+- `wsl/find <origin>` — find a distro whose `~/projects/*/` has a repo with the given git origin; returns `Find.Result(distro=...)`
+- `wsl/create <name> [--image PATH]` — `wsl --import` using the newest `.tar` in `C:/wsl-images/` by default; returns `Create.Result(distro=...)`
+- `wsl/nuke <name> [--force]` — unregister distro and remove its install dir; prompts for confirmation unless `--force`
+
+#### WSL notes
+- `wsl -l -q` outputs UTF-16 LE without BOM — decode with `utf-16-le`.
+- WSL drops extra positional args passed after `bash -c 'script'`, so embed dynamic values directly in the script using `shlex.quote()`.
 
 ## Dotfiles
 

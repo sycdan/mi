@@ -1,3 +1,4 @@
+import logging
 import msvcrt
 import shutil
 import subprocess
@@ -5,6 +6,8 @@ import sys
 from pathlib import Path
 
 from project.workon.pick.command import Pick
+
+logger = logging.getLogger(__name__)
 
 PROJECTS_DIR = Path.home() / "Projects"
 
@@ -30,6 +33,7 @@ def _latest_commit_timestamp(repo: Path) -> int:
 
 def _sorted_repos() -> list[Path]:
   if not PROJECTS_DIR.exists():
+    logger.warning(f"Projects directory not found: {PROJECTS_DIR}")
     return []
   repos = [
     (_latest_commit_timestamp(d), d)
@@ -37,6 +41,7 @@ def _sorted_repos() -> list[Path]:
     if d.is_dir() and (d / ".git").exists()
   ]
   repos.sort(reverse=True)
+  logger.debug(f"Found {len(repos)} repos")
   return [d for _, d in repos]
 
 
@@ -118,9 +123,12 @@ def _pick(items: list[str]) -> str | None:
 
 
 def handle(command: Pick) -> Pick.Result:
+  logger.debug(f"Handling {command=}")
   repos = _sorted_repos()
   chosen = _pick([d.name for d in repos])
   if not chosen:
+    logger.debug("No repo chosen")
     return Pick.Result()
   path = next(d for d in repos if d.name == chosen)
+  logger.info(f"Chose {path.as_posix()!r}")
   return Pick.Result(path=path.as_posix())
