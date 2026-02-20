@@ -1,27 +1,25 @@
-# Git Config
+# My CLI & dev env
 
 ## Setup
 
-Clone to a central location:
+Clone to `$HOME`:
 
 ```bash
-git clone https://github.com/sycdan/dotfiles.git ~/dotfiles
+cd ~ && git clone https://github.com/sycdan/mi.git
 ```
 
-Copy the config template file in your home folder:
+Install dotfiles:
 
 ```bash
-cp ~/dotfiles/git/config_identity-template ~/.gitconfig
+source ~/mi/dotfiles/install.sh
 ```
 
-And set the email applicable to this domain.
-
-## Hooks
+<!-- ## Hooks - disabled for now
 
 To register the hooks for all repos:
 
 ```bash
-git config --global core.hooksPath ~/dotfiles/git/hooks
+git config --global core.hooksPath ~/mi/dotfiles/git/hooks
 ```
 
 To register them for only one, run the same command just without the `--global` part, from within a repo folder.
@@ -29,7 +27,7 @@ To register them for only one, run the same command just without the `--global` 
 Make the scripts executable:
 
 ```bash
-chmod +x ~/dotfiles/git/hooks/pre-commit
+chmod +x ~/mi/dotfiles/git/hooks/pre-commit
 ```
 
 ## Formatting
@@ -44,3 +42,4 @@ Formatting can be disabled for specific file extensions by adding them to an env
 ```bash
 export GIT__HOOKS__SKIPFORMAT=cs,py
 ```
+-->
