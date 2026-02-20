@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Pre-push hook: lint checks + integration tests.
+# Activate with: git config core.hooksPath .githooks
+
+set -uo pipefail
+
+PASS=0
+FAIL=0
+ERRORS=()
+
+ok()   { echo "  ✅ $1"; PASS=$((PASS + 1)); }
+fail() { echo "  ❌ $1"; FAIL=$((FAIL + 1)); ERRORS+=("$1"); }
+
+assert_contains() {
+  local name=$1 expected=$2 actual=$3
+  if [[ "$actual" == *"$expected"* ]]; then
+    ok "$name"
+  else
+    fail "$name — expected to contain '$expected', got: $actual"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Ruff
+# ---------------------------------------------------------------------------
+if command -v ruff &>/dev/null; then
+  echo "ruff..."
+  if ruff check . --quiet 2>/dev/null;        then ok "ruff check";  else fail "ruff check";  fi
+  if ruff format --check . --quiet 2>/dev/null; then ok "ruff format"; else fail "ruff format"; fi
+else
+  echo "ruff not found, skipping lint checks"
+fi
+
+# ---------------------------------------------------------------------------
+# Integration tests
+# ---------------------------------------------------------------------------
+if ! command -v scaf &>/dev/null; then
+  echo "❌ scaf not found — integration tests are required"
+  exit 1
+else
+  echo "integration tests..."
+
+  out=$(scaf call wsl/list 2>/dev/null)
+  assert_contains "wsl/list returns Ubuntu"       '"Ubuntu"'        "$out"
+
+  out=$(scaf call wsl/path/get 'C:/Windows' 2>/dev/null)
+  assert_contains "wsl/path/get C:/Windows"        '/mnt/c/Windows'   "$out"
+
+  # wsl/find with a path that has no match — should still return the key cleanly
+  out=$(scaf call wsl/find 'C:/Windows' 2>/dev/null)
+  assert_contains "wsl/find returns distro key"    '"distro"'         "$out"
+
+  # pick with a query that matches nothing — should return path key with empty value
+  out=$(scaf call project/workon/pick --query __no_such_repo__ 2>/dev/null)
+  assert_contains "project/workon/pick returns path key" '"path"'     "$out"
+fi
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+echo ""
+echo "$PASS passed, $FAIL failed"
+if [[ $FAIL -gt 0 ]]; then
+  printf '  - %s\n' "${ERRORS[@]}"
+  exit 1
+fi
