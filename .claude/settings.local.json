@@ -3,7 +3,9 @@
     "allow": [
       "Bash(pip show:*)",
       "Bash(scaf call:*)",
-      "Bash(wsl:*)"
+      "Bash(wsl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
