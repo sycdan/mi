@@ -47,11 +47,22 @@ A command dataclass can define an `execute()` method that defers the handler imp
 
 ```python
 def execute(self) -> "MyCommand.Result":
-    from my.command.handler import handle
-    return handle(self)
+  from my.command.handler import handle
+  return handle(self)
 ```
 
 This lets callers do `MyCommand().execute()` without importing the handler directly.
+
+### Extra args passthrough
+
+Handlers that launch subprocesses can accept `*args` after the command to support non-interactive use:
+
+```python
+def handle(command: MyCommand, *extra: str) -> None:
+  ...
+```
+
+CLI callers pass them after `--`: `scaf call project/workon myproject -- exit`. This is how the pre-push hook avoids blocking on an interactive shell.
 
 ### Logging
 
@@ -64,8 +75,8 @@ All handlers use `logger = logging.getLogger(__name__)`. Scaf exposes log output
 ### Current commands
 
 **`project/`**
-- `project/workon [name] [--create]` — full dev environment flow: pick repo → find/create WSL distro → activate
-  - optional `name` arg: auto-selects if exactly one repo matches, fails if ambiguous
+- `project/workon <name> [--create]` — full dev environment flow: pick repo → find/create WSL distro → activate
+  - `name`: passed to `pick` as a query; auto-selects if exactly one repo matches, raises if ambiguous or missing
   - `--create`: initialises `~/Projects/<name>` as a new git repo if no match found
   - `project/workon/pick [--query QUERY]` — interactive TUI repo picker (msvcrt + ANSI, no deps); with `--query`, auto-selects single match or raises; returns `Pick.Result(path=...)`
 
@@ -74,7 +85,7 @@ All handlers use `logger = logging.getLogger(__name__)`. Scaf exposes log output
 - `wsl/find <origin>` — find a distro whose `$HOME/projects/*/` has any remote pointing to the given Windows path; returns `Find.Result(distro=...)`
 - `wsl/path/get <win_path> [--distro DISTRO]` — convert a Windows path to its WSL equivalent via `wslpath`; returns `Get.Result(wsl_path=...)`; uses the default WSL distro if `--distro` is omitted (query, no side effects)
 - `wsl/export <distro> [--name NAME]` — export a distro to `C:/wsl-images/<name>.tar` (creates the dir if needed); used to seed the image pool for `wsl/create`
-- `wsl/create <name> [--origin WIN_PATH] [--image PATH]` — `wsl --import` then clones the Windows repo into `~/projects/<name>`; raises if distro already exists
+- `wsl/create <name> [--origin WIN_PATH] [--image PATH]` — `wsl --import` then clones the Windows repo into `~/projects/<name>`; raises if distro already exists; auto-picks the latest `C:/wsl-images/*.tar` if `--image` omitted
 - `wsl/activate <name> [--project PROJECT] [cmd...]` — launch interactive shell; if `--project` given, starts in `~/projects/<project>`; any trailing args are passed to `wsl -- <cmd>` instead of opening a shell (e.g. `exit` to return immediately)
 - `wsl/nuke <name> [--force]` — unregister distro and remove its install dir; prompts for confirmation unless `--force`
 
