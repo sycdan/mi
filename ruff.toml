@@ -5,7 +5,7 @@ indent-width = 2
 [lint]
 select = ["E", "W", "F", "I", "B", "UP"]
 ignore = [
-  "E501",   # line too long — formatter handles this
+  "E501",    # line too long — formatter handles this
   "PLC0415", # import-outside-toplevel — intentional for deferred handler imports in execute()
 ]
 

@@ -20,12 +20,21 @@ assert_contains() {
   fi
 }
 
+assert_not_contains() {
+  local name=$1 unexpected=$2 actual=$3
+  if [[ "$actual" != *"$unexpected"* ]]; then
+    ok "$name"
+  else
+    fail "$name — expected NOT to contain '$unexpected', got: $actual"
+  fi
+}
+
 # ---------------------------------------------------------------------------
 # Ruff
 # ---------------------------------------------------------------------------
 if command -v ruff &>/dev/null; then
   echo "ruff..."
-  if ruff check . --quiet 2>/dev/null;        then ok "ruff check";  else fail "ruff check";  fi
+  if ruff check . --quiet 2>/dev/null;          then ok "ruff check";  else fail "ruff check";  fi
   if ruff format --check . --quiet 2>/dev/null; then ok "ruff format"; else fail "ruff format"; fi
 else
   echo "ruff not found, skipping lint checks"
@@ -37,22 +46,59 @@ fi
 if ! command -v scaf &>/dev/null; then
   echo "❌ scaf not found — integration tests are required"
   exit 1
+fi
+
+echo "integration tests..."
+
+out=$(scaf call wsl/list 2>/dev/null)
+assert_contains "wsl/list returns distros" '"distros"' "$out"
+
+out=$(scaf call project/workon/pick --query __no_such_repo__ 2>/dev/null)
+assert_contains "project/workon/pick returns path key" '"path"' "$out"
+
+# ---------------------------------------------------------------------------
+# Workon integration: create → find → nuke a known test project
+# ---------------------------------------------------------------------------
+TESTNAME="mi-hook-test"
+WIN_HOME=$(echo "$USERPROFILE" | tr '\\' '/')
+TESTDIR="$WIN_HOME/Projects/$TESTNAME"
+
+cleanup() {
+  scaf call wsl/nuke "$TESTNAME" --force >/dev/null 2>&1 || true
+  rm -rf "$TESTDIR" 2>/dev/null || true
+}
+
+if ! ls C:/wsl-images/*.tar >/dev/null 2>&1; then
+  echo "  ⚠ No WSL image in C:/wsl-images/ — skipping workon test"
 else
-  echo "integration tests..."
+  echo "workon integration test..."
+  trap cleanup EXIT
+
+  # Ensure clean slate
+  cleanup
 
   out=$(scaf call wsl/list 2>/dev/null)
-  assert_contains "wsl/list returns Ubuntu"       '"Ubuntu"'        "$out"
+  assert_not_contains "distro absent before create" "$TESTNAME" "$out"
 
-  out=$(scaf call wsl/path/get 'C:/Windows' 2>/dev/null)
-  assert_contains "wsl/path/get C:/Windows"        '/mnt/c/Windows'   "$out"
+  mkdir -p "$TESTDIR"
+  git -C "$TESTDIR" init --quiet
 
-  # wsl/find with a path that has no match — should still return the key cleanly
-  out=$(scaf call wsl/find 'C:/Windows' 2>/dev/null)
-  assert_contains "wsl/find returns distro key"    '"distro"'         "$out"
+  # wsl/create implicitly exercises wsl/path/get (wslpath conversion inside)
+  out=$(scaf call wsl/create "$TESTNAME" --origin "$TESTDIR" 2>/dev/null)
+  assert_contains "wsl/create returns distro name" "$TESTNAME" "$out"
 
-  # pick with a query that matches nothing — should return path key with empty value
-  out=$(scaf call project/workon/pick --query __no_such_repo__ 2>/dev/null)
-  assert_contains "project/workon/pick returns path key" '"path"'     "$out"
+  # wsl/find implicitly exercises wsl/path/get (origin → WSL path conversion)
+  out=$(scaf call wsl/find "$TESTDIR" 2>/dev/null)
+  assert_contains "wsl/find locates new distro" "$TESTNAME" "$out"
+
+  out=$(scaf call wsl/nuke "$TESTNAME" --force 2>/dev/null)
+  assert_contains "wsl/nuke returns distro name" "$TESTNAME" "$out"
+
+  out=$(scaf call wsl/list 2>/dev/null)
+  assert_not_contains "distro absent after nuke" "$TESTNAME" "$out"
+
+  cleanup
+  trap - EXIT
 fi
 
 # ---------------------------------------------------------------------------

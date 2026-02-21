@@ -21,7 +21,17 @@ def _distro_has_origin(distro: str, wsl_path: str) -> bool:
     home = _wsl(distro, "bash", "-c", "echo $HOME").stdout.strip()
     if not home:
       return False
-    dirs = _wsl(distro, "find", f"{home}/projects", "-maxdepth", "1", "-mindepth", "1", "-type", "d").stdout.splitlines()
+    dirs = _wsl(
+      distro,
+      "find",
+      f"{home}/projects",
+      "-maxdepth",
+      "1",
+      "-mindepth",
+      "1",
+      "-type",
+      "d",
+    ).stdout.splitlines()
     for d in dirs:
       remotes = _wsl(distro, "git", "-C", d, "remote", "-v").stdout
       if wsl_path in remotes:

@@ -7,9 +7,7 @@ class List:
 
   @dataclass
   class Result:
-    distros: list[str] = field(
-      default_factory=list, doc="Names of installed WSL distros"
-    )
+    distros: list[str] = field(default_factory=list, doc="Names of installed WSL distros")
 
   def execute(self) -> "List.Result":
     from wsl.list.handler import handle

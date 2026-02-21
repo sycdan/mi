@@ -74,7 +74,7 @@ All handlers use `logger = logging.getLogger(__name__)`. Scaf exposes log output
 - `wsl/find <origin>` — find a distro whose `$HOME/projects/*/` has any remote pointing to the given Windows path; returns `Find.Result(distro=...)`
 - `wsl/path/get <win_path> [--distro DISTRO]` — convert a Windows path to its WSL equivalent via `wslpath`; returns `Get.Result(wsl_path=...)`; uses the default WSL distro if `--distro` is omitted (query, no side effects)
 - `wsl/create <name> [--origin WIN_PATH] [--image PATH]` — `wsl --import` then clones the Windows repo into `~/projects/<name>`; raises if distro already exists
-- `wsl/activate <name> [--project PROJECT]` — launch interactive shell; if `--project` given, starts in `~/projects/<project>`
+- `wsl/activate <name> [--project PROJECT] [cmd...]` — launch interactive shell; if `--project` given, starts in `~/projects/<project>`; any trailing args are passed to `wsl -- <cmd>` instead of opening a shell (e.g. `exit` to return immediately)
 - `wsl/nuke <name> [--force]` — unregister distro and remove its install dir; prompts for confirmation unless `--force`
 
 #### WSL notes

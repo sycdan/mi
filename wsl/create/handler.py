@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 IMAGES_DIR = Path("C:/wsl-images")
 INSTALL_ROOT = Path("C:/wsl")
-_PATH = "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 
 def _latest_image() -> Path:
@@ -23,7 +22,9 @@ def _latest_image() -> Path:
 def handle(command: Create) -> Create.Result:
   existing = List().execute().distros
   if command.name in existing:
-    raise ValueError(f"WSL distro {command.name!r} already exists — use wsl/nuke to remove it first")
+    raise ValueError(
+      f"WSL distro {command.name!r} already exists — use wsl/nuke to remove it first"
+    )
 
   image = Path(command.image) if command.image else _latest_image()
   install_dir = INSTALL_ROOT / command.name
@@ -33,23 +34,24 @@ def handle(command: Create) -> Create.Result:
   subprocess.run(
     ["wsl", "--import", command.name, str(install_dir), str(image)],
     check=True,
+    capture_output=True,
     timeout=120,
   )
   logger.info(f"Created distro {command.name!r}")
 
   if command.origin:
-    # Use wslpath inside WSL to convert the Windows path — avoids MINGW mangling
-    quoted_win = shlex.quote(command.origin)
-    quoted_name = shlex.quote(command.name)
+    from wsl.path.get.query import Get
+
+    wsl_path = Get(win_path=command.origin).execute().wsl_path
     clone_script = (
-      f"{_PATH}; "
-      f"wsl_path=$(wslpath {quoted_win}); "
-      f"mkdir -p ~/projects && git clone \"$wsl_path\" ~/projects/{quoted_name}"
+      f"mkdir -p $HOME/projects && "
+      f"git clone {shlex.quote(wsl_path)} $HOME/projects/{shlex.quote(command.name)}"
     )
-    logger.info(f"Cloning {command.origin!r} into distro")
+    logger.info(f"Cloning {command.origin!r} ({wsl_path}) into distro")
     subprocess.run(
       ["wsl", "-d", command.name, "--", "bash", "-c", clone_script],
       check=True,
+      capture_output=True,
       timeout=120,
     )
     logger.info("Clone complete")

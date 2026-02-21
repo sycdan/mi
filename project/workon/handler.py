@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 PROJECTS_DIR = Path.home() / "Projects"
 
 
-def handle(command: Workon, name: str = "") -> None:
+def handle(command: Workon, name: str = "", *wsl_args: str) -> None:
   logger.debug(f"Handling {command=} {name=}")
 
   pick_result = Pick(query=name).execute()
@@ -45,4 +45,4 @@ def handle(command: Workon, name: str = "") -> None:
       logger.info(f"No existing distro found, creating {repo.name!r}")
       distro = Create(name=repo.name, origin=win_path).execute().distro
 
-  Activate(name=distro, project=repo.name).execute()
+  Activate(name=distro, project=repo.name).execute(*wsl_args)

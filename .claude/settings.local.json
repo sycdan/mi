@@ -1,11 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pip show:*)",
-      "Bash(scaf call:*)",
-      "Bash(wsl:*)",
+      "Bash(bash .githooks/pre-push)",
+      "Bash(chmod:*)",
+      "Bash(git -C ~/mi config core.hooksPath .githooks)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(pip show:*)",
+      "Bash(ruff format:*)",
+      "Bash(scaf call:*)",
+      "Bash(wsl:*)"
     ]
   }
 }

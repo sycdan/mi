@@ -15,9 +15,7 @@ class Nuke:
 
   @dataclass
   class Result:
-    distro: str = field(
-      default="", doc="Name of the deleted distro, or empty if cancelled"
-    )
+    distro: str = field(default="", doc="Name of the deleted distro, or empty if cancelled")
 
   def execute(self) -> "Nuke.Result":
     from wsl.nuke.handler import handle
