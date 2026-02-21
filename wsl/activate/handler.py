@@ -8,6 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 def handle(command: Activate, *wsl_args: str) -> None:
+  if wsl_args and wsl_args[0] == "--":
+    wsl_args = wsl_args[1:]
   logger.info(
     f"Activating distro {command.name!r}"
     + (f" → ~/projects/{command.project}" if command.project else "")

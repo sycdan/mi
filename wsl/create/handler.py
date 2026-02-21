@@ -5,6 +5,7 @@ from pathlib import Path
 
 from wsl.create.command import Create
 from wsl.list.command import List
+from wsl.path.get.query import Get
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +41,6 @@ def handle(command: Create) -> Create.Result:
   logger.info(f"Created distro {command.name!r}")
 
   if command.origin:
-    from wsl.path.get.query import Get
-
     wsl_path = Get(win_path=command.origin).execute().wsl_path
     clone_script = (
       f"mkdir -p $HOME/projects && "
@@ -55,5 +54,48 @@ def handle(command: Create) -> Create.Result:
       timeout=120,
     )
     logger.info("Clone complete")
+
+  # Bootstrap: clone ~/mi, install dotfiles, install scaf
+  mi_win_path = Path.home() / "mi"
+  mi_wsl_path = Get(win_path=mi_win_path.as_posix()).execute().wsl_path
+  logger.info(f"Cloning mi ({mi_wsl_path}) into distro")
+  subprocess.run(
+    [
+      "wsl",
+      "-d",
+      command.name,
+      "--",
+      "bash",
+      "-c",
+      f"git clone {shlex.quote(mi_wsl_path)} $HOME/mi",
+    ],
+    check=True,
+    capture_output=True,
+    timeout=60,
+  )
+  logger.info("Installing dotfiles")
+  subprocess.run(
+    ["wsl", "-d", command.name, "--", "bash", "-c", "bash $HOME/mi/dotfiles/install.sh"],
+    check=True,
+    capture_output=True,
+    timeout=60,
+  )
+  logger.info("Installing scaf")
+  subprocess.run(
+    [
+      "wsl",
+      "-d",
+      command.name,
+      "--",
+      "pip",
+      "install",
+      "--break-system-packages",
+      "git+https://github.com/sycdan/scaf",
+    ],
+    check=True,
+    capture_output=True,
+    timeout=120,
+  )
+  logger.info("Bootstrap complete")
 
   return Create.Result(distro=command.name)
