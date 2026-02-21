@@ -119,4 +119,4 @@ scaf call wsl/nuke ubuntu24-build --force
 
 ## Dotfiles
 
-`dotfiles/install.sh` copies git and tmux configs into `~`. After running it, set the email address in `~/.gitconfig` for company environments.
+`dotfiles/install.sh` copies git and tmux configs into `~`. `~/.gitconfig` includes `~/mi/dotfiles/git/config_common` (aliases, settings), so `~/mi` must exist — which it does in all bootstrapped WSL distros. Set the email in `~/.gitconfig` for company environments.
